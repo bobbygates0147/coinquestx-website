@@ -1,0 +1,118 @@
+export const ADMIN_BALANCE_ADJUSTMENT_OPTIONS = [
+  {
+    value: "copy_trade",
+    label: "Copy Trade",
+    description: "Credit profit, capital return, or a correction tied to a copied trader.",
+    referenceLabel: "Trader name",
+    referencePlaceholder: "Enter the copied trader name",
+  },
+  {
+    value: "mining",
+    label: "Mining",
+    description: "Apply mining profit, mining-cycle credit, or a mining correction.",
+    referenceLabel: "Mining package",
+    referencePlaceholder: "Enter miner package or cycle name",
+  },
+  {
+    value: "buy_bot",
+    label: "Buy Bots",
+    description: "Apply bot profit, activation correction, or bot-related balance movement.",
+    referenceLabel: "Bot name",
+    referencePlaceholder: "Enter the bot or automation package name",
+  },
+  {
+    value: "daily_signal",
+    label: "Daily Signal",
+    description: "Apply signal profit, plan correction, or signal service adjustment.",
+    referenceLabel: "Signal provider",
+    referencePlaceholder: "Enter the signal provider or plan name",
+  },
+  {
+    value: "subscription",
+    label: "Subscription",
+    description: "Apply subscription payout, refund, or plan billing correction.",
+    referenceLabel: "Plan name",
+    referencePlaceholder: "Enter the subscription plan name",
+  },
+  {
+    value: "stake",
+    label: "Stake",
+    description: "Apply staking reward, return, or staking adjustment.",
+    referenceLabel: "Stake package",
+    referencePlaceholder: "Enter the stake package or product name",
+  },
+  {
+    value: "place_trade",
+    label: "Place Trade",
+    description: "Apply profit, refund, or manual correction for a placed trade.",
+    referenceLabel: "Trade reference",
+    referencePlaceholder: "Enter the trade pair or reference",
+  },
+  {
+    value: "trades_roi",
+    label: "Trades ROI",
+    description: "Apply return-on-investment credits or ROI corrections.",
+    referenceLabel: "ROI reference",
+    referencePlaceholder: "Enter the ROI plan or trade reference",
+  },
+  {
+    value: "real_estate",
+    label: "Real Estate",
+    description: "Apply property investment return, refund, or capital correction.",
+    referenceLabel: "Project name",
+    referencePlaceholder: "Enter the real-estate project name",
+  },
+  {
+    value: "buy_crypto",
+    label: "Buy Crypto",
+    description: "Apply buy-crypto refund, settlement, or purchase correction.",
+    referenceLabel: "Asset or order",
+    referencePlaceholder: "Enter the asset or order reference",
+  },
+  {
+    value: "deposit",
+    label: "Deposit",
+    description: "Apply deposit reconciliation, funding correction, or deposit credit.",
+    referenceLabel: "Deposit reference",
+    referencePlaceholder: "Enter the deposit or proof reference",
+  },
+  {
+    value: "withdrawal",
+    label: "Withdrawal",
+    description: "Apply withdrawal reversal, reconciliation, or payout correction.",
+    referenceLabel: "Withdrawal reference",
+    referencePlaceholder: "Enter the withdrawal reference",
+  },
+  {
+    value: "referral",
+    label: "Referral Reward",
+    description: "Apply referral commissions, reward payouts, or referral corrections.",
+    referenceLabel: "Referral source",
+    referencePlaceholder: "Enter the referral campaign or user reference",
+  },
+  {
+    value: "bonus",
+    label: "Bonus / Promo",
+    description: "Apply manual promotions, bonus credits, or campaign rewards.",
+    referenceLabel: "Campaign",
+    referencePlaceholder: "Enter the campaign or promo name",
+  },
+  {
+    value: "account_review",
+    label: "Account Review",
+    description: "Apply a compliance, review, or account-level balance correction.",
+    referenceLabel: "Review reference",
+    referencePlaceholder: "Enter the review or ticket reference",
+  },
+  {
+    value: "manual",
+    label: "Manual Adjustment",
+    description: "Apply a direct admin balance change that does not belong to a specific product.",
+    referenceLabel: "Reference",
+    referencePlaceholder: "Enter an optional internal reference",
+  },
+];
+
+export const getAdminBalanceAdjustmentOption = (value) =>
+  ADMIN_BALANCE_ADJUSTMENT_OPTIONS.find((option) => option.value === value) ||
+  ADMIN_BALANCE_ADJUSTMENT_OPTIONS.find((option) => option.value === "manual");
