@@ -11,7 +11,7 @@ import { faCheck } from "@fortawesome/free-solid-svg-icons";
 import brand from "../../../public/brand.png";
 import brand2 from "../../../public/brand2.png";
 import brand3 from "../../../public/brand3.png";
-import brand4 from "../../../public/brand.png";
+import brand4 from "../../../public/brand4.png";
 import FooterPage from "../../components/home/layout/Footer";
 import { useState, useEffect } from "react";
 import SkillsSection from "./Skill";

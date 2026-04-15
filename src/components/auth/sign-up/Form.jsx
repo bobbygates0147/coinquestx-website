@@ -3,6 +3,8 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import countryData from "./CountryData.json";
 import { API_BASE_URL } from "../../../config/api";
+import coinquestxLogoDark from "../../../pictures/coinquestxlogodark.png";
+import coinquestxLogoLight from "../../../pictures/coinquestxlogolight.png";
 
 const SignUpPage = () => {
   const navigate = useNavigate();
@@ -27,6 +29,7 @@ const SignUpPage = () => {
   const [registrationChallengeId, setRegistrationChallengeId] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [otpExpiresAt, setOtpExpiresAt] = useState("");
+  const [isResendingCode, setIsResendingCode] = useState(false);
   const requiresVerification = Boolean(registrationChallengeId);
   const uniqueCountries = useMemo(() => {
     const seen = new Set();
@@ -117,6 +120,105 @@ const SignUpPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const getApiSexValue = (sex = "") => {
+    switch (`${sex}`.toLowerCase()) {
+      case "male":
+        return "Male";
+      case "female":
+        return "Female";
+      case "other":
+        return "Other";
+      default:
+        return sex;
+    }
+  };
+
+  const buildRegistrationPayload = () => ({
+    firstName: formData.firstName.trim(),
+    lastName: formData.lastName.trim(),
+    email: formData.email.toLowerCase().trim(),
+    phoneNumber: formData.phoneNumber.trim(),
+    sex: getApiSexValue(formData.sex),
+    country: formData.country,
+    currencyCode: formData.currencyCode,
+    currencySymbol: formData.currencySymbol,
+    password: formData.password,
+    confirmPassword: formData.confirmPassword,
+    referralCode: formData.referralCode,
+  });
+
+  const parseResponsePayload = async (response) => {
+    let result = null;
+    const responseText = await response.text();
+    if (responseText) {
+      try {
+        result = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error("JSON parse error:", parseError);
+        throw new Error(`Invalid JSON response: ${responseText}`);
+      }
+    }
+    return result;
+  };
+
+  const requestRegistrationVerification = async () => {
+    const userData = buildRegistrationPayload();
+    const response = await fetch(`${API_BASE_URL}/User/Register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(userData),
+    });
+
+    const result = await parseResponsePayload(response);
+
+    if (response.status === 202 && result?.requiresVerification) {
+      setRegistrationChallengeId(result?.data?.challengeId || "");
+      setOtpExpiresAt(result?.data?.expiresAt || "");
+      setVerificationCode("");
+      toast.success(
+        <div className="p-4 bg-teal-700 text-white rounded-lg shadow-lg">
+          <p className="font-bold">Verification Code Sent</p>
+          <p className="text-sm mt-1">
+            Enter the OTP sent to {result?.data?.email || userData.email}.
+          </p>
+        </div>
+      );
+      return;
+    }
+
+    let errorMessage = "Registration failed";
+    if (result?.errors) {
+      const errorKeys = Object.keys(result.errors);
+      if (errorKeys.length > 0) {
+        const firstError = result.errors[errorKeys[0]];
+        errorMessage = Array.isArray(firstError) ? firstError[0] : firstError;
+      }
+    } else if (result?.message) {
+      errorMessage = result.message;
+    }
+
+    throw new Error(errorMessage);
+  };
+
+  const handleResendVerificationCode = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsResendingCode(true);
+    try {
+      await requestRegistrationVerification();
+    } catch (error) {
+      console.error("Verification resend error:", error);
+      toast.error(error.message || "Could not resend verification code.");
+    } finally {
+      setIsResendingCode(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -137,77 +239,24 @@ const SignUpPage = () => {
     setIsLoading(true);
 
     try {
-      // Ensure sex value matches API expectations exactly
-      const getApiSexValue = (sex) => {
-        switch (sex.toLowerCase()) {
-          case 'male': return 'Male';
-          case 'female': return 'Female';
-          case 'other': return 'Other';
-          default: return sex;
-        }
-      };
-
-      // Match the exact API expected format from Swagger
-      const userData = {
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        email: formData.email.toLowerCase().trim(),
-        phoneNumber: formData.phoneNumber.trim(),
-        sex: getApiSexValue(formData.sex), // Ensure proper case
-        country: formData.country,
-        currencyCode: formData.currencyCode,
-        currencySymbol: formData.currencySymbol,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
-        referralCode: formData.referralCode,
-      };
-
-      const response = await fetch(
-        requiresVerification
-          ? `${API_BASE_URL}/User/Register/Confirm`
-          : `${API_BASE_URL}/User/Register`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-          },
-          body: JSON.stringify(
-            requiresVerification
-              ? {
-                  challengeId: registrationChallengeId,
-                  code: verificationCode.trim(),
-                }
-              : userData
-          ),
-        }
-      );
-
-      let result = null;
-      const responseText = await response.text();
-      if (responseText) {
-        try {
-          result = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error("JSON parse error:", parseError);
-          throw new Error(`Invalid JSON response: ${responseText}`);
-        }
-      }
-
-      if (!requiresVerification && response.status === 202 && result?.requiresVerification) {
-        setRegistrationChallengeId(result?.data?.challengeId || "");
-        setOtpExpiresAt(result?.data?.expiresAt || "");
-        setVerificationCode("");
-        toast.success(
-          <div className="p-4 bg-teal-700 text-white rounded-lg shadow-lg">
-            <p className="font-bold">Verification Code Sent</p>
-            <p className="text-sm mt-1">
-              Enter the OTP sent to {result?.data?.email || userData.email}.
-            </p>
-          </div>
-        );
+      if (!requiresVerification) {
+        await requestRegistrationVerification();
         return;
       }
+
+      const response = await fetch(`${API_BASE_URL}/User/Register/Confirm`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          challengeId: registrationChallengeId,
+          code: verificationCode.trim(),
+        }),
+      });
+
+      const result = await parseResponsePayload(response);
 
       if (response.ok && requiresVerification) {
         const token = result?.data?.token || result?.token;
@@ -300,9 +349,11 @@ const SignUpPage = () => {
         {/* Left Side - Visual */}
         <div className="hidden md:flex flex-col justify-between w-1/2 bg-gradient-to-br from-teal-600 to-teal-800 p-8 text-white">
           <div>
-            <h1 className="text-4xl font-bold">
-              Coin<span className="text-teal-300">QuestX</span>
-            </h1>
+            <img
+              src={coinquestxLogoLight}
+              alt="CoinQuestX logo"
+              className="h-12 w-auto object-contain"
+            />
             <p className="mt-2 text-teal-100">
               Your journey to financial freedom starts here
             </p>
@@ -384,6 +435,11 @@ const SignUpPage = () => {
         {/* Right Side - Form */}
         <div className="w-full md:w-1/2 p-8">
           <div className="text-center mb-8">
+            <img
+              src={coinquestxLogoDark}
+              alt="CoinQuestX logo"
+              className="mx-auto mb-4 h-12 w-auto object-contain md:hidden"
+            />
             <h1 className="text-3xl font-bold text-teal-700">
               Create Your Account
             </h1>
@@ -697,17 +753,27 @@ const SignUpPage = () => {
                     ? ` Expires ${new Date(otpExpiresAt).toLocaleTimeString()}.`
                     : ""}
                 </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRegistrationChallengeId("");
-                    setVerificationCode("");
-                    setOtpExpiresAt("");
-                  }}
-                  className="mt-3 text-sm font-medium text-teal-700 hover:text-teal-900"
-                >
-                  Edit registration details
-                </button>
+                <div className="mt-3 flex items-center gap-4">
+                  <button
+                    type="button"
+                    onClick={handleResendVerificationCode}
+                    disabled={isLoading || isResendingCode}
+                    className="text-sm font-medium text-teal-700 hover:text-teal-900 disabled:cursor-not-allowed disabled:text-teal-400"
+                  >
+                    {isResendingCode ? "Sending..." : "Resend code"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRegistrationChallengeId("");
+                      setVerificationCode("");
+                      setOtpExpiresAt("");
+                    }}
+                    className="text-sm font-medium text-teal-700 hover:text-teal-900"
+                  >
+                    Edit registration details
+                  </button>
+                </div>
               </div>
             )}
 

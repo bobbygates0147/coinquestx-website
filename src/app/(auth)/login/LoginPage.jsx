@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useUser } from "../../../context/UserContext";
+import coinquestxLogoDark from "../../../pictures/coinquestxlogodark.png";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -10,10 +11,24 @@ const LoginPage = () => {
   const [challengeId, setChallengeId] = useState("");
   const [otpExpiresAt, setOtpExpiresAt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isResendingCode, setIsResendingCode] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { loginUser } = useUser();
   const requiresTwoFactor = Boolean(challengeId);
+
+  const requestTwoFactorCode = async () => {
+    const result = await loginUser(email, password);
+    if (result?.requiresTwoFactor) {
+      setChallengeId(result.challengeId || "");
+      setOtpExpiresAt(result.expiresAt || "");
+      setTwoFactorCode("");
+      toast.success(result.message || "Verification code sent to your email.");
+      return true;
+    }
+
+    throw new Error("Could not send a new verification code.");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,14 +41,17 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
-      const result = await loginUser(email, password, {
-        challengeId,
-        twoFactorCode: twoFactorCode.trim(),
-      });
+      const result = requiresTwoFactor
+        ? await loginUser(email, password, {
+            challengeId,
+            twoFactorCode: twoFactorCode.trim(),
+          })
+        : await loginUser(email, password);
 
       if (result?.requiresTwoFactor) {
         setChallengeId(result.challengeId || "");
         setOtpExpiresAt(result.expiresAt || "");
+        setTwoFactorCode("");
         toast.success(result.message || "Verification code sent to your email.");
         setIsLoading(false);
         return;
@@ -48,14 +66,33 @@ const LoginPage = () => {
     }
   };
 
+  const handleResendTwoFactorCode = async () => {
+    if (!email || !password) {
+      toast.error("Enter your email and password first.");
+      return;
+    }
+
+    setIsResendingCode(true);
+    try {
+      await requestTwoFactorCode();
+    } catch (error) {
+      console.error("Two-factor resend error:", error);
+      toast.error(error.message || "Could not resend verification code.");
+    } finally {
+      setIsResendingCode(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-900 to-teal-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-xl shadow-2xl overflow-hidden">
         <div className="p-8 space-y-6">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-teal-600">
-              KOIN<span className="text-teal-400">FU</span>
-            </h1>
+            <img
+              src={coinquestxLogoDark}
+              alt="CoinQuestX logo"
+              className="mx-auto h-12 w-auto object-contain sm:h-14"
+            />
             <h2 className="mt-2 text-xl font-semibold text-gray-800">
               Welcome back
             </h2>
@@ -126,6 +163,14 @@ const LoginPage = () => {
                   Enter the 6-digit code sent to {email}.
                   {otpExpiresAt ? ` Expires ${new Date(otpExpiresAt).toLocaleTimeString()}.` : ""}
                 </p>
+                <button
+                  type="button"
+                  onClick={handleResendTwoFactorCode}
+                  disabled={isLoading || isResendingCode}
+                  className="mt-3 text-sm font-medium text-teal-600 hover:text-teal-700 disabled:cursor-not-allowed disabled:text-teal-300"
+                >
+                  {isResendingCode ? "Sending..." : "Resend code"}
+                </button>
               </div>
             )}
 

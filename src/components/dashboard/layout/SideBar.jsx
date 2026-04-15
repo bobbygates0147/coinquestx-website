@@ -5,7 +5,8 @@ import { useTheme } from "next-themes";
 import PropTypes from "prop-types";
 import coinquestxLogoDark from "../../../pictures/coinquestxlogodark.png";
 import coinquestxLogoLight from "../../../pictures/coinquestxlogolight.png";
-import coinquestxMark from "../../../pictures/coinquestxlogo small.png";
+import coinquestxMarkDark from "../../../pictures/coinquestxlogo small.png";
+import coinquestxMarkLight from "../../../pictures/coinquestxlogo-small-light.png";
 
 export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
   const { theme } = useTheme();
@@ -28,6 +29,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
     ? "shadow-[0_20px_60px_rgba(2,8,23,0.28)]"
     : "shadow-[0_20px_50px_rgba(15,23,42,0.08)]";
   const activeLogo = isDark ? coinquestxLogoLight : coinquestxLogoDark;
+  const activeMark = isDark ? coinquestxMarkLight : coinquestxMarkDark;
 
   return (
     <>
@@ -82,7 +84,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
                   </button>
                   <div className="hidden md:flex items-center justify-center" aria-hidden="true">
                     <img
-                      src={coinquestxMark}
+                      src={activeMark}
                       alt=""
                       className="h-9 w-9 object-contain"
                     />
